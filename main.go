@@ -20,8 +20,8 @@ func main() {
 	}
 
 	address := args[1]
-	secret = args[3]
-	script = args[4]
+	secret = args[2]
+	script = args[3]
 
 	http.HandleFunc("/", runScript)
 	http.ListenAndServe(address, nil)
