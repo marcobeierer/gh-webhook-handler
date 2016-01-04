@@ -1,7 +1,10 @@
 package main
 
 import (
+	"crypto/hmac"
+	"crypto/sha1"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -28,14 +31,28 @@ func main() {
 }
 
 func runScript(rw http.ResponseWriter, req *http.Request) {
-	if secret != req.Header.Get("X-Hub-Signature") {
-		log.Println("wrong secret provided")
+	body, err := ioutil.ReadAll(req.Body)
+	if err != nil {
+		log.Println(err)
+		rw.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	signature := req.Header.Get("X-Hub-Signature")
+
+	mac := hmac.New(sha1.New, []byte(secret))
+	mac.Write(body)
+	expectedSignature := mac.Sum(nil)
+
+	if hmac.Equal([]byte(signature), expectedSignature) {
+		log.Println("wrong secret provided", signature, expectedSignature)
 		rw.WriteHeader(http.StatusUnauthorized)
 		return
 	}
 
 	cmd := exec.Command(script)
-	err := cmd.Run()
+
+	err = cmd.Run()
 	if err != nil {
 		log.Println(err)
 		rw.WriteHeader(http.StatusInternalServerError)
