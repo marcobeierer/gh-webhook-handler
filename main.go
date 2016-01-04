@@ -42,9 +42,9 @@ func runScript(rw http.ResponseWriter, req *http.Request) {
 
 	mac := hmac.New(sha1.New, []byte(secret))
 	mac.Write(body)
-	expectedSignature := mac.Sum(nil)
+	expectedSignature := fmt.Sprintf("sha1=%x", mac.Sum(nil))
 
-	if hmac.Equal([]byte(signature), expectedSignature) {
+	if signature != expectedSignature {
 		log.Println("wrong secret provided", signature, expectedSignature)
 		rw.WriteHeader(http.StatusUnauthorized)
 		return
